@@ -1,0 +1,74 @@
+# Run "cargo install garden-tools" to install garden https://gitlab.com/garden-rs/garden
+#
+# examples:
+#   garden build -- --offline
+#   garden check -vv
+#   garden -D prefix=/usr/local install
+#   garden doc
+trees:
+  rmtree:
+    path: "${GARDEN_CONFIG_DIR}"
+    url: git@gitlab.com:davvid/rmtree.git
+
+commands:
+  build: cargo build --release
+  build/lto: cargo build --profile release-lto
+  check>:
+    - check/fmt
+    - check/audit
+    - check/clippy
+    - check/deny
+    - check/msrv
+    - test
+  check/audit: |
+    if type cargo-audit >/dev/null 2>&1
+    then
+        cargo audit ${no-fetch} "$@"
+    fi
+  check/clippy: cargo clippy --all "$@" -- -D warnings
+  check/deny: |
+    if type cargo-deny >/dev/null 2>&1
+    then
+        cargo deny --workspace check ${hide-graph} ${disable-fetch} "$@"
+    fi
+  check/fmt: cargo fmt --all --check "$@"
+  check/msrv: |
+    if type cargo-msrv >/dev/null 2>&1
+    then
+        cargo msrv verify
+    fi
+  clean: cargo clean "$@"
+  doc: |
+    env RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --workspace
+  fix: cargo clippy --all --fix "$@" -- -D warnings
+  fmt: cargo fmt "$@"
+  install: cargo install --path . --root "${DESTDIR}${prefix}"
+  pkg/deb>:
+    - pkg/deb/build
+    - pkg/deb/package
+  pkg/deb/build: |
+    cargo build --profile deb --target "${target-musl}"
+  pkg/deb/package: |
+    mkdir -p target/debian
+    cargo deb --profile deb --target "${target-musl}" --output target/debian
+  publish: |
+    cargo publish --package "${package}" "$@"
+  test: cargo test "$@"
+
+
+# Variables can be set externally. e.g.:
+#   garden -D DESTDIR=/tmp/stage -D prefix=/usr/local install
+variables:
+  DESTDIR: ""
+  prefix: ~/.cargo
+  bindir: ${prefix}/bin
+  docdir: ${prefix}/share/doc/rmtreee
+  target-musl: x86_64-unknown-linux-musl
+  pkg: ${GARDEN_CONFIG_DIR}/pkg
+  debdir: ${pkg}/deb
+  fetch: ""
+  disable-fetch: $ test -n "${fetch}" || printf '%s' --disable-fetch
+  graph: ""
+  hide-graph: $ test -n "${graph}" || printf '%s' --hide-inclusion-graph
+  no-fetch: $ test -n "${fetch}" || printf '%s' --no-fetch
+  package: rmtree
