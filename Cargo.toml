@@ -1,0 +1,74 @@
+[package]
+name = "rmtree"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.74.0"
+description = "Remove files and directories trees in parallel"
+keywords = ["command-line-utilities", "filesystem"]
+categories = [
+    "command-line-utilities",
+    "filesystem"
+]
+license = "MIT"
+readme = "README.md"
+homepage = "https://gitlab.com/davvid/rmtree"
+documentation = "https://docs.rs/rmtree/latest/rmtree"
+repository = "https://gitlab.com/davvid/rmtree"
+authors = ["David Aguilar <davvid@gmail.com>"]
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+
+[dependencies]
+anyhow = "1.0"
+clap = "4.5"
+clap-cargo = "0.15"
+rayon = "1.10"
+rm_rf = "0.6.2"
+
+[dev-dependencies]
+
+[lib]
+name = "rmtree"
+
+[[bin]]
+name = "rmtree"
+doc = true
+test = true
+
+[profile.release]
+debug = true
+
+[profile.release-lto]
+inherits = "release"
+opt-level = 3
+debug = false
+strip = "symbols"
+debug-assertions = false
+overflow-checks = false
+lto = "fat"
+panic = "abort"
+incremental = false
+codegen-units = 1
+
+# This is the main way to strip binaries in the deb package created by
+# 'cargo deb'. For other release binaries, we (currently) call 'strip'
+# explicitly in the release process.
+[profile.deb]
+inherits = "release"
+debug = false
+
+[package.metadata.deb]
+name = "rmtree"
+section = "utils"
+assets = [
+  ["target/release/rmtree", "usr/bin/", "755"],
+  ["LICENSE", "usr/share/doc/rmtree/", "644"],
+  ["doc/src/changelog.md", "usr/share/doc/rmtree/CHANGELOG.md", "644"],
+  ["README.md", "usr/share/doc/rmtree/README.md", "644"],
+]
+extended-description = """\
+rmtree is a faster alternative to "rm -rf".
+rmtree removes files and directory trees in parallel.
+"""
