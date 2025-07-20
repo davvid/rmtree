@@ -3,6 +3,7 @@ use rayon::prelude::*;
 
 /// Remove directory trees and files based on the specified Params.
 pub fn rmtrees_with_params(params: Params) {
+    let params = params.update();
     rmtrees(&params.paths);
 }
 
