@@ -28,7 +28,7 @@ pub fn rmtree(path: &std::path::Path) -> std::io::Result<()> {
 
 /// Remove filesystem trees in parallel
 #[derive(Parser, Clone, Debug)]
-#[command(bin_name = "rmtree")]
+#[command(author, version, about, long_about = None)]
 #[command(styles = clap_cargo::style::CLAP_STYLING)]
 pub struct Params {
     /// Run commands in parallel using the specified number of threads.
