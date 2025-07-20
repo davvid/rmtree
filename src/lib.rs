@@ -37,10 +37,10 @@ pub struct Params {
         default_missing_value = "0",
         value_name = "THREADS",
     )]
-    threads: Option<usize>,
+    pub threads: Option<usize>,
     /// Paths to delete
     #[arg(required = true)]
-    paths: Vec<std::path::PathBuf>,
+    pub paths: Vec<std::path::PathBuf>,
 }
 
 impl Params {
