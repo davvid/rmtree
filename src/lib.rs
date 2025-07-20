@@ -4,13 +4,25 @@ use rayon::prelude::*;
 /// Remove directory trees and files based on the specified Params.
 pub fn rmtrees_with_params(params: Params) {
     let params = params.update();
-    rmtrees(&params.paths);
+    if params.parents {
+        rmtrees_and_parents(&params.paths);
+    } else {
+        rmtrees(&params.paths);
+    }
 }
 
 /// Remove the specified directory trees and files in parallel.
 pub fn rmtrees(paths: &Vec<std::path::PathBuf>) {
     paths.par_iter().for_each(|path| {
         rmtree(path).ok(); // Errors are ignored.
+    });
+}
+
+/// Remove the specified directory trees and files and their parent directories in parallel.
+pub fn rmtrees_and_parents(paths: &Vec<std::path::PathBuf>) {
+    paths.par_iter().for_each(|path| {
+        rmtree(path).ok(); // Errors are ignored.
+        remove_leading_directories(path);
     });
 }
 
@@ -39,6 +51,9 @@ pub struct Params {
         value_name = "THREADS",
     )]
     pub threads: Option<usize>,
+    /// Remove empty leading directories
+    #[arg(long, short = 'p', default_value_t = false)]
+    pub parents: bool,
     /// Paths to delete
     #[arg(required = true)]
     pub paths: Vec<std::path::PathBuf>,
@@ -108,4 +123,18 @@ fn remove_directory(path: &std::path::Path) -> std::io::Result<()> {
             format!("Unable to remove directory {path:?}: {err}"),
         )
     })
+}
+
+/// Remove empty leading parent directories leading up to the specified paths.
+fn remove_leading_directories(path: &std::path::Path) {
+    let mut parent_option = path.parent();
+    while let Some(parent) = parent_option {
+        if !parent.exists() {
+            break;
+        }
+        if std::fs::remove_dir(parent).is_err() {
+            break;
+        }
+        parent_option = parent.parent();
+    }
 }
