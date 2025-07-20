@@ -1,0 +1,21 @@
+[advisories]
+ignore = [
+]
+
+[licenses]
+allow = [
+    "MIT",
+]
+
+exceptions = [
+    { allow = ["Unicode-3.0"], crate = "unicode-ident" },
+]
+
+[bans]
+skip = [
+    # "crate-name",
+]
+
+skip-tree = [
+    # "crate-name",
+]
