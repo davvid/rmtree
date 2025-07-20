@@ -74,7 +74,7 @@ Thread scaling is measured relative to `rmtree -j1`.
 
 The sweet spot on the number of threads for maximum efficiency will vary depending on
 your specific storage and hardware. In this specific test, we can see negative
-consequences from adding more threads in the jump from 24 and 32 threads.
+consequences from adding more threads in the jump from 24 to 32 threads.
 
 
 ## Links

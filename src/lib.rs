@@ -17,7 +17,7 @@ pub fn rmtrees(paths: &Vec<std::path::PathBuf>) {
     });
 }
 
-/// Remove a single file or directory tree.
+/// Remove either a single file or a directory and its contents.
 pub fn rmtree(path: &std::path::Path) -> std::io::Result<()> {
     if path.is_symlink() || path.is_file() {
         std::fs::remove_file(path)
@@ -26,12 +26,12 @@ pub fn rmtree(path: &std::path::Path) -> std::io::Result<()> {
     }
 }
 
-/// Remove filesystem trees in parallel
+/// Parameters that control the rmtree command.
 #[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
 #[command(styles = clap_cargo::style::CLAP_STYLING)]
 pub struct Params {
-    /// Run commands in parallel using the specified number of threads.
+    /// Run commands in parallel using the specified number of threads
     #[arg(
         long,
         short = 't',
