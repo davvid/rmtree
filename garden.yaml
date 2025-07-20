@@ -5,12 +5,17 @@
 #   garden check -vv
 #   garden -D prefix=/usr/local install
 #   garden doc
+#
 trees:
   rmtree:
     path: "${GARDEN_CONFIG_DIR}"
     url: git@gitlab.com:davvid/rmtree.git
     remotes:
       github: git@github.com:davvid/rmtree.git
+    gitconfig:
+      remote.origin.pushurl:
+        - "git@gitlab.com:davvid/rmtree.git"
+        - "git@github.com:davvid/rmtree.git"
 
 commands:
   build: cargo build --release
@@ -58,7 +63,7 @@ commands:
   test: cargo test "$@"
 
 
-# Variables can be set externally. e.g.:
+# Variables can be set externally:
 #   garden -D DESTDIR=/tmp/stage -D prefix=/usr/local install
 variables:
   DESTDIR: ""
