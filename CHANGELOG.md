@@ -2,6 +2,8 @@
 
 ## v1.2.0
 
+*Released 2025-07-16*
+
 **Features**:
 
 - `rmtree -p | --parents` can now be used to remove leading parent directories that
