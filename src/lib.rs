@@ -2,11 +2,7 @@ use clap::Parser;
 use rayon::prelude::*;
 
 /// Remove directory trees and files based on the specified Params.
-/// Optionally initializes threads and starts the removal process.
 pub fn rmtrees_with_params(params: Params) {
-    if let Some(num_threads) = params.threads {
-        initialize_threads(num_threads).ok();
-    }
     rmtrees(&params.paths);
 }
 
@@ -47,27 +43,38 @@ pub struct Params {
     paths: Vec<std::path::PathBuf>,
 }
 
+impl Params {
+    /// Initialize the global rayon thread pool used by rmtree.
+    /// You must call update() before calling rmtrees_with_params(),
+    /// rmtrees(), or rmtree() in order for the thread limits to be applied.
+    pub fn update(mut self) -> Self {
+        let Some(threads) = self.threads else {
+            return self;
+        };
+        let num_threads = if threads == 0 {
+            default_num_threads()
+        } else {
+            threads
+        };
+        if num_threads != threads {
+            self.threads = Some(num_threads);
+        }
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(num_threads)
+            .build_global()
+            .ok();
+
+        self
+    }
+}
+
 /// Get the default number of threads to run in parallel
 fn default_num_threads() -> usize {
-    let min_num_threads = 1;
+    let min_num_threads = 2;
     match std::thread::available_parallelism() {
         Ok(value) => std::cmp::max(value.get(), min_num_threads),
         Err(_) => min_num_threads,
     }
-}
-
-/// Initialize the rayon global thread pool.
-fn initialize_threads(num_threads: usize) -> anyhow::Result<()> {
-    let num_threads = if num_threads == 0 {
-        default_num_threads()
-    } else {
-        num_threads
-    };
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build_global()?;
-
-    Ok(())
 }
 
 /// Recursively traverse the child subdirectories in parallel.
