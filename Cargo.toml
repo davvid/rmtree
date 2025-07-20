@@ -65,7 +65,6 @@ section = "utils"
 assets = [
   ["target/release/rmtree", "usr/bin/", "755"],
   ["LICENSE", "usr/share/doc/rmtree/", "644"],
-  ["doc/src/changelog.md", "usr/share/doc/rmtree/CHANGELOG.md", "644"],
   ["README.md", "usr/share/doc/rmtree/README.md", "644"],
 ]
 extended-description = """\
