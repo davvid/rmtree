@@ -1,9 +1,9 @@
 [package]
 name = "rmtree"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 rust-version = "1.74.0"
-description = "Remove files and directories trees in parallel"
+description = "rmtree is a faster rm -rf"
 keywords = ["cli", "rm", "rmtree", "filesystem", "utility"]
 categories = [
     "command-line-utilities",
@@ -68,6 +68,6 @@ assets = [
   ["README.md", "usr/share/doc/rmtree/README.md", "644"],
 ]
 extended-description = """\
-rmtree is a faster alternative to "rm -rf".
-rmtree removes files and directory trees in parallel.
+rmtree speeds up recursive file and directory removal by performing filesystem
+traversals and removals in parallel.
 """

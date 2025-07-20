@@ -1,20 +1,23 @@
 # rmtree
 
-`rmtree` removes files and directory trees quickly by performing removals in parallel
+`rmtree` is a faster `rm -rf`.
 
-`rmtree` is a faster placement for `rm -rf`.
+`rmtree` speeds up recursive file and directory removal by performing filesystem
+traversals and removals in parallel.
 
 ```bash
 # Install the "rmtree" command-line tool.
 cargo install rmtree
+
+rmtree --help
+rmtree /large/nested/directory /trees/quickly
 ```
 
 ## Documentation
 
-Run `rmtree --help` for more usage details.
+Run `rmtree --help` for command-line usage details.
 
-`rmtree` scans and removes files and directoresi from the filesystem in parallel.
-This allows it to achieve significant performance gains over the coreutils `rm` command.
+* [rmtree API documentation on docs.rs](https://docs.rs/rmtree/latest/rmtree/)
 
 
 ## Installation
@@ -69,8 +72,9 @@ The following table summarizes the timings for `rm -rf` from GNU coreutils 8.32 
 Relative performance is the performance relative to `rm -rf`.
 Thread scaling is measured relative to `rmtree -j1`.
 
-YMMV depending on your storage hardware, but in this test the sweet spot was somewhere
-between 5 and 9 threads.
+The sweet spot on the number of threads for maximum efficiency will vary depending on
+your specific storage and hardware. In this specific test, we can see negative
+consequences from adding more threads in the jump from 24 and 32 threads.
 
 
 ## Links
@@ -83,4 +87,4 @@ between 5 and 9 threads.
 [![Build status](https://gitlab.com/davvid/rmtree/badges/main/pipeline.svg)](https://gitlab.com/davvid/rmtree/-/pipelines)
 [![MIT License](https://img.shields.io/gitlab/license/davvid/rmtree.svg)](LICENSE)
 
-RmTree is actively maintained and its core functionality is stable and feature-complete.
+`rmtree` is actively maintained and its core functionality is stable and feature-complete.
