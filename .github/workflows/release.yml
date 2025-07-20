@@ -32,7 +32,7 @@ jobs:
       - name: Check that tag version and Cargo.toml version are the same
         shell: bash
         run: |
-          if ! grep -q "package.version = \"$VERSION_NUMBER\"" Cargo.toml
+          if ! grep -q "version = \"$VERSION_NUMBER\"" Cargo.toml
           then
             echo "version does not match Cargo.toml" >&2
             exit 1
@@ -71,11 +71,6 @@ jobs:
           rust: nightly
           target: x86_64-unknown-linux-musl
           strip: x86_64-linux-musl-strip
-        - build: linux-gui
-          os: ubuntu-latest
-          rust: nightly
-          target: x86_64-unknown-linux-gnu
-          strip: x86_64-linux-gnu-strip
         - build: stable-x86
           os: ubuntu-latest
           rust: stable
@@ -142,7 +137,7 @@ jobs:
     - name: Install packages
       if: matrix.os == 'ubuntu-latest'
       shell: bash
-      run: sudo apt install git musl-tools rsync zsh
+      run: sudo apt install coreutils git musl-tools rsync
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
@@ -232,7 +227,13 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         tar czf "$ARCHIVE_CORE.tar.gz" "$ARCHIVE_CORE"
-        shasum -a 256 "$ARCHIVE_CORE.tar.gz" >"$ARCHIVE_CORE.tar.gz.sha256"
+        if ! type sha256sum >/dev/null
+        then
+          sha256sum () {
+            shasum -a 256 "$@"
+          }
+        fi
+        sha256sum "$ARCHIVE_CORE.tar.gz" >"$ARCHIVE_CORE.tar.gz.sha256"
         echo "ASSET_CORE=$ARCHIVE_CORE.tar.gz" >>$GITHUB_ENV
         echo "ASSET_CORE_SUM=$ARCHIVE_CORE.tar.gz.sha256" >>$GITHUB_ENV
 
@@ -259,7 +260,7 @@ jobs:
 
     - name: Install packages
       shell: bash
-      run: sudo apt install git musl-tools rsync
+      run: sudo apt install coreutils musl-tools rsync
 
     - name: Install Rust
       run: |
@@ -307,10 +308,8 @@ jobs:
       shell: bash
       run: |
         cd "$DEB_DIR"
-        shasum -a 256 "$DEB_CORE_NAME" >"$DEB_CORE_NAME.sha256"
-        shasum -a 256 "$DEB_GUI_NAME" >"$DEB_GUI_NAME.sha256"
+        sha256sum "$DEB_CORE_NAME" >"$DEB_CORE_NAME.sha256"
         echo "SUM_CORE=$DEB_CORE_NAME.sha256" >>$GITHUB_ENV
-        echo "SUM_GUI=$DEB_GUI_NAME.sha256" >>$GITHUB_ENV
 
     - name: Upload release archive
       env:
@@ -320,4 +319,3 @@ jobs:
         version="${{ needs.create-release.outputs.version }}"
         cd "$DEB_DIR"
         gh release upload "$version" "$DEB_CORE_NAME" "$SUM_CORE"
-        gh release upload "$version" "$DEB_GUI_NAME" "$SUM_GUI"
