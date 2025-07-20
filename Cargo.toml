@@ -4,7 +4,7 @@ version = "1.0.0"
 edition = "2021"
 rust-version = "1.74.0"
 description = "Remove files and directories trees in parallel"
-keywords = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "rm", "rmtree", "filesystem", "utility"]
 categories = [
     "command-line-utilities",
     "filesystem"
