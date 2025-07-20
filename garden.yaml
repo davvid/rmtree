@@ -9,6 +9,8 @@ trees:
   rmtree:
     path: "${GARDEN_CONFIG_DIR}"
     url: git@gitlab.com:davvid/rmtree.git
+    remotes:
+      github: git@github.com:davvid/rmtree.git
 
 commands:
   build: cargo build --release
