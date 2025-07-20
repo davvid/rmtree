@@ -1,0 +1,38 @@
+image: rust
+
+stages:
+  - test
+  - build
+
+cache:
+  paths:
+    - target/release-lto
+
+before_script:
+  - cargo install garden-tools
+  - garden build/lto -vv
+
+tests:
+  stage: test
+  image: rust
+  script:
+    - garden test -vv
+
+checks:
+  stage: test
+  image: rust
+  script:
+    - rustup component add clippy
+    - rustup component add rustfmt
+    - garden check/clippy -vv
+    - garden check/fmt -vv
+
+build:amd64:
+  stage: build
+  image: rust
+  script:
+    - cp -p target/release-lto/rmtree rmtree
+    - ./rmtree --version
+  artifacts:
+    paths:
+      - rmtree
