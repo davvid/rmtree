@@ -1,0 +1,192 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches:
+    - dev
+    - main
+  schedule:
+  - cron: '0 0 * * 6'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The section is needed to drop write-all permissions that are granted to
+# `schedule` events. By specifying any permission explicitly all others are set
+# to none. By using the principle of least privilege the damage a compromised
+# workflow can do (because of an injection or compromised third party tool or
+# action) is restricted. Currently the worklow doesn't need any additional
+# permission except for pulling the code. Adding labels to issues, commenting
+# on pull-requests, etc. may need additional permissions.
+#
+# Syntax for this section:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+#
+# Reference for how to assign permissions on a job-by-job basis:
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+#
+# Reference for additional permissions that can be enabled:
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
+permissions:
+  # to fetch code (actions/checkout)
+  contents: read
+
+jobs:
+  test:
+    name: Tests
+    env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
+      CARGO: cargo
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      # Note that we only use cross on Linux, so setting a target on a
+      # different OS will just use normal cargo.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      TARGET_DIR: ./target
+      # Pin cross to avoid breaking CI. Bump this periodically.
+      CROSS_VERSION: v0.2.5
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - build: pinned
+          os: ubuntu-latest
+          rust: 1.74.0
+        - build: stable
+          os: ubuntu-latest
+          rust: stable
+        - build: beta
+          os: ubuntu-latest
+          rust: beta
+        - build: nightly
+          os: ubuntu-latest
+          rust: nightly
+        - build: stable-musl
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-musl
+        - build: stable-x86
+          os: ubuntu-latest
+          rust: stable
+          target: i686-unknown-linux-gnu
+        - build: stable-aarch64
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+        - build: stable-arm-musleabihf
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabihf
+        - build: stable-arm-musleabi
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabi
+        - build: stable-powerpc64
+          os: ubuntu-latest
+          rust: stable
+          target: powerpc64-unknown-linux-gnu
+        - build: stable-s390x
+          os: ubuntu-latest
+          rust: stable
+          target: s390x-unknown-linux-gnu
+        - build: macos
+          os: macos-latest
+          rust: nightly
+        - build: win-msvc
+          os: windows-2022
+          rust: nightly
+        - build: win-gnu
+          os: windows-2022
+          rust: nightly-x86_64-gnu
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install packages
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt install git musl-tools rsync
+    - run: rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+    - run: |
+        date +%W >weekly
+        echo ${{ matrix.build }}-${{ matrix.rust }}-${{ matrix.target }} >>weekly
+        cat weekly
+    - id: cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: test-${{ hashFiles('weekly') }}
+    - name: Install and enable cross
+      if: matrix.os == 'ubuntu-latest' && matrix.target != ''
+      run: |
+        # Use pre-compiled cross releases because cross has over 100 dependencies and
+        # takes a while to compile.
+        curl -LO "https://github.com/cross-rs/cross/releases/download/${CROSS_VERSION}/cross-x86_64-unknown-linux-musl.tar.gz"
+        tar -xzf cross-x86_64-unknown-linux-musl.tar.gz --directory=${HOME}/.cargo/bin
+        echo "CARGO=cross" >> ${GITHUB_ENV}
+        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> ${GITHUB_ENV}
+        echo "TARGET_DIR=./target/${{ matrix.target }}" >> ${GITHUB_ENV}
+    - name: Show command used for cargo
+      run: |
+        echo "CARGO=${{ env.CARGO }}"
+        echo "TARGET_DIR=${{ env.TARGET_DIR }}"
+        echo "TARGET_FLAGS=${{ env.TARGET_FLAGS }}"
+    - name: Build all crates
+      run: ${{ env.CARGO }} build --verbose ${{ env.TARGET_FLAGS }}
+    - name: Show build.rs stderr
+      shell: bash
+      run: |
+        set +x
+        stderr="$(find "${{ env.TARGET_DIR }}/debug" -name stderr -print0 | xargs -0 ls -t | head -n1)"
+        if test -s "$stderr"
+        then
+          echo "===== $stderr ===== "
+          cat "$stderr"
+          echo "====="
+        fi
+        set -x
+    - name: Run tests with cross
+      if: matrix.target != ''
+      run: ${{ env.CARGO }} test --verbose --workspace ${{ env.TARGET_FLAGS }}
+
+  check:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy --no-self-update
+    - run: date +%W >weekly
+    - id: cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: check-${{ hashFiles('weekly') }}
+    - name: Install cargo tools
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        cargo install garden-tools
+        cargo install cargo-audit
+        cargo install cargo-deny
+        cargo install cargo-msrv
+    - run: garden check/fmt -vv
+    - run: garden check/clippy -vv
+    - run: garden check/audit -vv -D fetch=true
+    - run: garden check/deny -vv -D fetch=true -D graph=true
+    - run: garden check/msrv -vv
+
+  docs:
+    name: Documentation
+    env:
+      MDBOOK_VERSION: v0.4.48
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install stable --profile minimal --no-self-update
+      - run: date +%W >weekly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: docs-${{ hashFiles('weekly') }}
+      - name: Install garden
+        run: |
+          cargo install garden-tools
+      - run: garden doc -vv
