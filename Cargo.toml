@@ -24,7 +24,8 @@ maintenance = { status = "actively-developed" }
 anyhow = "1.0"
 clap = "4.5"
 clap-cargo = "0.15"
-rayon = "1.10"
+rayon = "<1.11"
+rayon-core = "<1.13"
 rm_rf = "0.6.2"
 
 [dev-dependencies]
