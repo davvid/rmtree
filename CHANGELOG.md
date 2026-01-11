@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.3.0 (Upcoming)
+
+**Development**:
+
+- The minimum supported Rust version is now `1.86.0`.
+
+- The `clap-cargo` and `rayon` dependencies were upgraded.
+
+
+## v1.2.1
+
+*Released 2026-01-10*
+
+**Development**:
+
+- Dependencies were pinned to maintain the minimum supported Rust version of `1.74.0`.
+
+
 ## v1.2.0
 
 *Released 2025-07-16*
