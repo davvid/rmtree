@@ -2,7 +2,7 @@
 name = "rmtree"
 version = "1.2.1"
 edition = "2021"
-rust-version = "1.74.0"
+rust-version = "1.86.0"
 description = "rmtree is a faster rm -rf"
 keywords = ["cli", "rm", "rmtree", "filesystem", "utility"]
 categories = [
@@ -23,9 +23,8 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 anyhow = "1.0"
 clap = "4.5"
-clap-cargo = "0.15"
-rayon = "<1.11"
-rayon-core = "<1.13"
+clap-cargo = "0.18"
+rayon = "1.11"
 rm_rf = "0.6"
 
 [dev-dependencies]
