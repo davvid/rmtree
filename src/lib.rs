@@ -40,7 +40,7 @@ pub fn rmtree(path: &std::path::Path) -> std::io::Result<()> {
 #[command(author, version, about, long_about = None)]
 #[command(styles = clap_cargo::style::CLAP_STYLING)]
 pub struct Params {
-    /// Specifies the number of threads to run simultaneously
+    /// Remove paths in parallel using the specified number of threads
     #[arg(
         long,
         short = 't',
